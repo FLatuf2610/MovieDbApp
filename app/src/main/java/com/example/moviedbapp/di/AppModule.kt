@@ -1,11 +1,16 @@
 package com.example.moviedbapp.di
 
+import android.content.Context
+import androidx.room.Room
 import com.example.moviedbapp.data.network.apiClient.MovieDbApiClient
+import com.example.moviedbapp.data.network.local.MoviesDatabase
+import com.example.moviedbapp.data.network.local.dao.MoviesDao
 import com.example.moviedbapp.utils.AuthInterceptor
 import com.example.moviedbapp.utils.Constants
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -35,6 +40,19 @@ object AppModule {
     fun provideApiClient(retrofit: Retrofit): MovieDbApiClient {
         return retrofit
             .create(MovieDbApiClient::class.java)
+    }
+
+    @Singleton
+    @Provides
+    fun provideDatabase(@ApplicationContext context: Context): MoviesDatabase {
+        return Room.databaseBuilder(context, MoviesDatabase::class.java, "movies_db")
+            .build()
+    }
+
+    @Singleton
+    @Provides
+    fun provideDao(db: MoviesDatabase): MoviesDao {
+        return db.getDao()
     }
 
 }

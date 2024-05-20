@@ -19,5 +19,6 @@ data class Movie(
     val tagline: String = "",
     val spoken_languages: List<SpokenLanguage> = emptyList(),
     val origin_country: List<String> = emptyList(),
-    val original_language: String = ""
+    val original_language: String = "",
+    var isSaved: Boolean = false
 )

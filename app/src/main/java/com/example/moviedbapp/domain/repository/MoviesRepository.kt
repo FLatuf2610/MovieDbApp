@@ -3,6 +3,8 @@ package com.example.moviedbapp.domain.repository
 import com.example.moviedbapp.data.network.dto.collection.CollectionResponseDto
 import com.example.moviedbapp.data.network.dto.listResponse.ListResponseDto
 import com.example.moviedbapp.data.network.dto.movieDetail.MovieDetailResponseDto
+import com.example.moviedbapp.data.network.local.entities.MovieEntity
+import kotlinx.coroutines.flow.Flow
 
 interface MoviesRepository {
 
@@ -21,4 +23,12 @@ interface MoviesRepository {
     suspend fun getIncomingMovies(page: Int): ListResponseDto
 
     suspend fun getCollection(id: Int): CollectionResponseDto
+
+    suspend fun getSavedMovieById(id: Int): MovieEntity?
+
+    suspend fun saveMovie(movieEntity: MovieEntity)
+
+    suspend fun getAllMoviesFromDb(): Flow<List<MovieEntity>>
+
+    suspend fun deleteMovie(movieEntity: MovieEntity)
 }

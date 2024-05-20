@@ -24,6 +24,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,6 +45,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -134,6 +137,7 @@ fun DetailScreen(navController: NavController, detailViewModel: DetailViewModel,
         is DetailViewModelState.Success -> {
             val successState = state as DetailViewModelState.Success
             val movie = successState.movie
+            var isSaved by rememberSaveable { mutableStateOf(movie.isSaved) }
             val relatedMovies by detailViewModel.relatedMovies.collectAsState()
             val collection by detailViewModel.collectionMovies.collectAsState()
             val gradientBrush = Brush.verticalGradient(
@@ -144,7 +148,7 @@ fun DetailScreen(navController: NavController, detailViewModel: DetailViewModel,
                 if (containerScrollState.value <= 275) Color.Transparent else MaterialTheme.colorScheme.background
             val containerColor by animateColorAsState(targetValue = tColor, label = "")
             var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
-
+            var buttonBackEnabled by rememberSaveable { mutableStateOf(true) }
             Scaffold(
                 topBar = {
                     TopAppBar(
@@ -157,17 +161,37 @@ fun DetailScreen(navController: NavController, detailViewModel: DetailViewModel,
                         },
                         navigationIcon = {
                             IconButton(
-                                onClick = { navController.popBackStack() },
+                                onClick = { buttonBackEnabled = false
+                                    navController.popBackStack() },
                                 colors = IconButtonDefaults.iconButtonColors(
                                     contentColor = if (containerScrollState.value <= 275) Color.White else MaterialTheme.colorScheme.onBackground
-                                )
+                                ),
+                                enabled = buttonBackEnabled
                             ) {
                                 Icon(Icons.Default.ArrowBack, contentDescription = null)
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = containerColor
-                        )
+                        ),
+                        actions = {
+                            if (isSaved) {
+                                IconButton(onClick = {
+                                    detailViewModel.deleteMovie(movie.title, movie.posterPath, movieId)
+                                    isSaved = false
+                                }) {
+                                    Icon(imageVector = Icons.Filled.Favorite, contentDescription = null)
+                                }
+                            }
+                            else {
+                                IconButton(onClick = {
+                                    detailViewModel.saveMovie(movie.title, movie.posterPath, movieId)
+                                    isSaved = true
+                                }) {
+                                    Icon(imageVector = Icons.Outlined.FavoriteBorder, contentDescription = null)
+                                }
+                            }
+                        }
                     )
                 }
             ) { _ ->
@@ -339,13 +363,13 @@ fun Info(title: String, content: String) {
     ) {
         Text(
             text = title,
-            color = MaterialTheme.colorScheme.outlineVariant,
-            fontWeight = FontWeight.SemiBold
+            color = Color.Gray,
+            fontWeight = FontWeight.Medium
         )
         Text(
             text = content,
-            color = MaterialTheme.colorScheme.outlineVariant,
-            fontWeight = FontWeight.SemiBold
+            color = Color.Gray,
+            fontWeight = FontWeight.Medium
         )
     }
 }

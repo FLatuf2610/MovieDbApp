@@ -1,12 +1,17 @@
 package com.example.moviedbapp.ui.homeScreen
 
 import android.util.Log
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.snapping.SnapFlingBehavior
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -20,12 +25,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PageSize
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -33,11 +43,14 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,12 +63,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -73,7 +88,7 @@ import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
     LaunchedEffect(true) {
@@ -169,23 +184,18 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
                             .fillMaxWidth()
                             .verticalScroll(rememberScrollState())
                     ) {
+                        val pagerState = rememberPagerState {
+                            topMovies.movieList.size
+                        }
+                        TopMoviesList(movies = topMovies, pagerState = pagerState) {
+                            navController.navigate("movie/$it")
+                        }
                         MoviesList(
                             titleSection = "Most Popular Movies",
                             list = popularMovies,
                             onFinishScroll = {
                                 scope.launch {
                                     viewModel.getPopularMovies(it)
-                                }
-                            }) { movie ->
-                            navController.navigate("movie/${movie.id}")
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        MoviesList(
-                            titleSection = "Top Rated Movies",
-                            list = topMovies,
-                            onFinishScroll = {
-                                scope.launch {
-                                    viewModel.getTopMovies(it)
                                 }
                             }) { movie ->
                             navController.navigate("movie/${movie.id}")
@@ -233,9 +243,9 @@ fun MoviesList(
     val lazyRowState = rememberLazyListState()
     Text(
         text = titleSection,
-        fontSize = 20.sp,
+        fontSize = 16.sp,
         modifier = Modifier.padding(horizontal = 16.dp),
-        fontWeight = FontWeight.SemiBold
+        fontWeight = FontWeight.Bold
     )
     Spacer(modifier = Modifier.height(16.dp))
     LazyRow(
@@ -261,7 +271,7 @@ fun MoviesList(
 
 
 @Composable
-fun MovieItem(movie: MovieItem, width: Int = 175, height: Int = 250, onClickMovie: (MovieItem) -> Unit) {
+fun MovieItem(movie: MovieItem, width: Int = 140, height: Int = 200, onClickMovie: (MovieItem) -> Unit) {
     Card(
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))
@@ -304,11 +314,68 @@ fun MovieItemPreview() {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun TopMoviesList(movies: MovieList, pagerState: PagerState, onClick: (Int) -> Unit) {
+    Spacer(modifier = Modifier.height(16.dp))
+    Text(
+        text = "Top Rated Movies",
+        modifier = Modifier.padding(horizontal = 16.dp),
+        fontWeight = FontWeight.SemiBold,
+    )
+    HorizontalPager(
+        state = pagerState,
+        contentPadding = PaddingValues(horizontal = 40.dp, vertical = 20.dp),
+    ) {
+        val movie = movies.movieList[it]
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(400.dp)
+                    .padding(horizontal = 8.dp)
+                    .clickable { onClick(movie.id) }
+                    .focusable()
+            ) {
+                AsyncImage(
+                    model = Constants.IMAGE_BASE_URL + movie.poster_path,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    placeholder = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                    )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Row {
+                Text(
+                    text = movie.title,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Button(onClick = { onClick(movie.id) }) {
+                Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null)
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(text = "Go To Movie")
+            }
+        }
+    }
+}
+
 @Composable
 fun SearchedMovieItem(movie: Result, onClickMovie: (Result) -> Unit) {
     Surface(
         onClick = { onClickMovie(movie) },
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        color = Color.Unspecified
     ) {
         Row(
             modifier = Modifier
@@ -329,7 +396,7 @@ fun SearchedMovieItem(movie: Result, onClickMovie: (Result) -> Unit) {
             Text(
                 modifier = Modifier.weight(1f),
                 text = movie.title,
-                fontSize = 24.sp,
+                fontSize = 16.sp,
             )
             Icon(Icons.Default.KeyboardArrowRight, null)
         }
@@ -341,14 +408,13 @@ fun SearchedMovieItem(movie: Result, onClickMovie: (Result) -> Unit) {
 fun SearchScreen(viewModel: HomeViewModel, navController: NavController) {
     val searchedMovies by viewModel.searchedMovies.collectAsState()
     val keyboardState = LocalSoftwareKeyboardController.current
+    var backButtonEnabled by remember { mutableStateOf(true) }
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+
             SearchBar(
                 query = viewModel.queryString,
                 onQueryChange = {
@@ -367,13 +433,23 @@ fun SearchScreen(viewModel: HomeViewModel, navController: NavController) {
                     .fillMaxWidth(),
                 placeholder = { Text(text = "Search Movie") },
                 leadingIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(
+                        enabled = backButtonEnabled,
+                        onClick = {
+                        backButtonEnabled = false
+                        navController.popBackStack()
+                    }
+                    ) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = null
                         )
                     }
-                }
+                },
+                colors = SearchBarDefaults.colors(
+                    containerColor = Color.Unspecified,
+
+                )
             ) {
                 val lazyColumnState = rememberLazyListState()
                 if (lazyColumnState.isScrollInProgress) {
@@ -398,7 +474,7 @@ fun SearchScreen(viewModel: HomeViewModel, navController: NavController) {
             }
         }
     }
-}
+
 
 
 

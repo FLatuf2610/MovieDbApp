@@ -3,9 +3,12 @@ package com.example.moviedbapp.presentation.detail
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.moviedbapp.domain.useCases.DeleteMovieUseCase
 import com.example.moviedbapp.domain.useCases.GetCollectionUseCase
 import com.example.moviedbapp.domain.useCases.GetMovieDetailUseCase
 import com.example.moviedbapp.domain.useCases.GetRelatedMoviesUseCase
+import com.example.moviedbapp.domain.useCases.GetSavedMovieById
+import com.example.moviedbapp.domain.useCases.SaveMovieUseCase
 import com.example.moviedbapp.presentation.detail.model.DetailViewModelState
 import com.example.moviedbapp.presentation.detail.model.DetailViewModelState.Success
 import com.example.moviedbapp.presentation.detail.model.DetailViewModelState.Error
@@ -23,7 +26,10 @@ import javax.inject.Inject
 class DetailViewModel @Inject constructor(
     private val getMovieDetailUseCase: GetMovieDetailUseCase,
     private val getRelatedMoviesUseCase: GetRelatedMoviesUseCase,
-    private val getCollectionUseCase: GetCollectionUseCase
+    private val getCollectionUseCase: GetCollectionUseCase,
+    private val saveMovieUseCase: SaveMovieUseCase,
+    private val deleteMovieUseCase: DeleteMovieUseCase,
+    private val getSavedMovieById: GetSavedMovieById
 ) : ViewModel() {
 
     var state = MutableStateFlow<DetailViewModelState>(Success(Movie()))
@@ -41,6 +47,8 @@ class DetailViewModel @Inject constructor(
             state.value = Loading
             try {
                 val movie = async { getMovieDetailUseCase(movieId) }.await()
+                val isSaved = getSavedMovieById(movieId) != null
+                movie.isSaved = isSaved
                 getRelatedMovies(movieId)
                 if (movie.collection != null) getCollection(movie.collection.id)
                 state.value = Success(movie)
@@ -69,6 +77,18 @@ class DetailViewModel @Inject constructor(
             } catch (e: java.lang.Exception) {
                 e.printStackTrace()
             }
+        }
+    }
+
+    fun saveMovie(title: String, posterPath: String?, id: Int) {
+        viewModelScope.launch {
+            saveMovieUseCase(id, title, posterPath)
+        }
+    }
+
+    fun deleteMovie(title: String, posterPath: String?, id: Int) {
+        viewModelScope.launch {
+            deleteMovieUseCase(id = id, posterPath = posterPath, title = title)
         }
     }
 

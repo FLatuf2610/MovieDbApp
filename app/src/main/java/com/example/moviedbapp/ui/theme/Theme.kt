@@ -17,7 +17,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 val DarkColorPalette = darkColorScheme(
-    primary = Color(0xFFBB86FC),
+    primary = Color.White,
     secondary = Color(0xFF03DAC6),
     background = Color(0xFF121212),
     surface = Color(0xFF121212),
@@ -28,7 +28,7 @@ val DarkColorPalette = darkColorScheme(
 )
 
 val LightColorPalette = lightColorScheme(
-    primary = Color(0xFF6200EE),
+    primary = Color.Black,
     secondary = Color(0xFF03DAC6),
     background = Color.White,
     surface = Color.White,
@@ -42,7 +42,7 @@ val LightColorPalette = lightColorScheme(
 fun MovieDbAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
