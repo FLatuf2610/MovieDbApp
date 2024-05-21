@@ -1,7 +1,6 @@
 package com.example.moviedbapp.data.network.dto.collection
 
 import com.example.moviedbapp.presentation.models.Collection
-import com.example.moviedbapp.presentation.models.MovieList
 import com.google.gson.annotations.SerializedName
 
 data class CollectionResponseDto(
