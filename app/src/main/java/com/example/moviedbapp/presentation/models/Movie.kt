@@ -30,7 +30,7 @@ data class Movie(
 fun Movie.toEntity() =
     MovieEntity(
         id = id,
-        poster_path = posterPath,
+        posterPath = posterPath,
         title = title,
         backDropPath = backDropPath,
         budget = budget,
@@ -39,6 +39,6 @@ fun Movie.toEntity() =
         realeseDate = realeseDate,
         runtime = runtime,
         tagline = tagline,
-        original_language = originalLanguage,
+        originalLanguage = originalLanguage,
         isSaved = isSaved
     )
