@@ -17,9 +17,11 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.moviedbapp.presentation.detail.DetailViewModel
 import com.example.moviedbapp.presentation.home.HomeViewModel
+import com.example.moviedbapp.presentation.saved.SavedViewModel
 import com.example.moviedbapp.ui.detailScreen.DetailScreen
 import com.example.moviedbapp.ui.homeScreen.HomeScreen
 import com.example.moviedbapp.ui.homeScreen.SearchScreen
+import com.example.moviedbapp.ui.savedScreen.SavedScreen
 import com.example.moviedbapp.ui.theme.MovieDbAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -32,6 +34,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val homeViewModel: HomeViewModel = hiltViewModel()
             val detailViewModel: DetailViewModel = hiltViewModel()
+            val savedViewModel: SavedViewModel = hiltViewModel()
             val navController = rememberNavController()
             MovieDbAppTheme {
                 // A surface container using the 'background' color from the theme
@@ -39,23 +42,32 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+
                     NavHost(navController = navController, startDestination = "home") {
                         composable("home") {
                             HomeScreen(navController = navController, viewModel = homeViewModel)
                         }
                         composable(
-                            "movie/{movieId}",
-                            arguments = listOf(navArgument("movieId") { type = NavType.IntType })
+                            "movie/{movieId}?offlineMode={offlineMode}",
+                            arguments = listOf(
+                                navArgument("movieId") { type = NavType.IntType },
+                                navArgument("offlineMode") { defaultValue = false }
+                                )
                         ) {
                             val movieId = it.arguments?.getInt("movieId")!!
+                            val offlineMode = it.arguments?.getBoolean("offlineMode")
                             DetailScreen(
                                 navController = navController,
                                 detailViewModel = detailViewModel,
-                                movieId = movieId
+                                movieId = movieId,
+                                offlineMode = offlineMode!!
                             )
                         }
                         composable("search") {
                             SearchScreen(viewModel = homeViewModel, navController)
+                        }
+                        composable("saved") {
+                            SavedScreen(viewModel = savedViewModel, navController = navController)
                         }
                     }
                 }
@@ -63,4 +75,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+
 

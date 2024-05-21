@@ -20,4 +20,4 @@ data class Result(
     val vote_count: Int
 )
 fun Result.toDomain() =
-    MovieItem(posterPath = poster_path, id = id)
+    MovieItem(posterPath = poster_path, id = id, title)

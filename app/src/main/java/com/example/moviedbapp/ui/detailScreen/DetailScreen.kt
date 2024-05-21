@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -56,7 +55,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -75,9 +73,14 @@ import java.io.IOException
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetailScreen(navController: NavController, detailViewModel: DetailViewModel, movieId: Int) {
-    LaunchedEffect(key1 = Unit) {
-        detailViewModel.initViewModel(movieId)
+fun DetailScreen(
+    navController: NavController,
+    detailViewModel: DetailViewModel,
+    movieId: Int,
+    offlineMode: Boolean
+) {
+    LaunchedEffect(Unit) {
+        detailViewModel.initViewModel(movieId, offlineMode)
     }
     val state by detailViewModel.state.collectAsState()
     when (state) {
@@ -117,7 +120,7 @@ fun DetailScreen(navController: NavController, detailViewModel: DetailViewModel,
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = { detailViewModel.initViewModel(movieId) }) {
+                    Button(onClick = { detailViewModel.initViewModel(movieId, offlineMode) }) {
                         Text(text = "Try Again")
                     }
                 }
@@ -161,8 +164,10 @@ fun DetailScreen(navController: NavController, detailViewModel: DetailViewModel,
                         },
                         navigationIcon = {
                             IconButton(
-                                onClick = { buttonBackEnabled = false
-                                    navController.popBackStack() },
+                                onClick = {
+                                    buttonBackEnabled = false
+                                    navController.popBackStack()
+                                },
                                 colors = IconButtonDefaults.iconButtonColors(
                                     contentColor = if (containerScrollState.value <= 275) Color.White else MaterialTheme.colorScheme.onBackground
                                 ),
@@ -177,18 +182,24 @@ fun DetailScreen(navController: NavController, detailViewModel: DetailViewModel,
                         actions = {
                             if (isSaved) {
                                 IconButton(onClick = {
-                                    detailViewModel.deleteMovie(movie.title, movie.posterPath, movieId)
+                                    detailViewModel.deleteMovie(movie)
                                     isSaved = false
+                                    if (offlineMode) navController.popBackStack()
                                 }) {
-                                    Icon(imageVector = Icons.Filled.Favorite, contentDescription = null)
+                                    Icon(
+                                        imageVector = Icons.Filled.Favorite,
+                                        contentDescription = null
+                                    )
                                 }
-                            }
-                            else {
+                            } else {
                                 IconButton(onClick = {
-                                    detailViewModel.saveMovie(movie.title, movie.posterPath, movieId)
+                                    detailViewModel.saveMovie(movie)
                                     isSaved = true
                                 }) {
-                                    Icon(imageVector = Icons.Outlined.FavoriteBorder, contentDescription = null)
+                                    Icon(
+                                        imageVector = Icons.Outlined.FavoriteBorder,
+                                        contentDescription = null
+                                    )
                                 }
                             }
                         }
@@ -209,6 +220,7 @@ fun DetailScreen(navController: NavController, detailViewModel: DetailViewModel,
                             modifier = Modifier
                                 .fillMaxWidth()
                         ) {
+
                             AsyncImage(
                                 model = Constants.IMAGE_BASE_URL + movie.posterPath,
                                 contentDescription = null,
@@ -237,7 +249,7 @@ fun DetailScreen(navController: NavController, detailViewModel: DetailViewModel,
                                     .padding(horizontal = 16.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Info(title = "Relase Date", content = movie.realeseDate)
+                                Info(title = "Realese Date", content = movie.realeseDate)
                                 Spacer(
                                     modifier = Modifier
                                         .height(50.dp)
@@ -267,43 +279,43 @@ fun DetailScreen(navController: NavController, detailViewModel: DetailViewModel,
                                 modifier = Modifier.padding(horizontal = 16.dp)
                             )
                             Spacer(modifier = Modifier.height(16.dp))
-                            if (movie.collection == null && relatedMovies.movieList.isNotEmpty()) selectedTabIndex =
-                                0
-                            else if (movie.collection != null && relatedMovies.movieList.isNullOrEmpty()) selectedTabIndex =
-                                1
-                            if (movie.collection != null || !relatedMovies.movieList.isNullOrEmpty()) {
-                                TabRow(selectedTabIndex = selectedTabIndex) {
-                                    if (relatedMovies.movieList.isNotEmpty())
-                                        Tab(
-                                            selected = selectedTabIndex == 0,
-                                            onClick = { selectedTabIndex = 0 },
-                                            text = { Text(text = "Similar Movies") }
-                                        )
-                                    if (movie.collection != null) {
-                                        Tab(
-                                            selected = selectedTabIndex == 1,
-                                            onClick = { selectedTabIndex = 1 },
-                                            text = { Text(text = "Collection") }
-                                        )
-                                    }
+                            if (!offlineMode) {
+                                if (movie.collection == null && relatedMovies.movieList.isNotEmpty()) selectedTabIndex =
+                                    0
+                                else if (movie.collection != null && relatedMovies.movieList.isEmpty()) selectedTabIndex =
+                                    1
+                                if (movie.collection != null || relatedMovies.movieList.isNotEmpty()) {
+                                    TabRow(selectedTabIndex = selectedTabIndex) {
+                                        if (relatedMovies.movieList.isNotEmpty())
+                                            Tab(
+                                                selected = selectedTabIndex == 0,
+                                                onClick = { selectedTabIndex = 0 },
+                                                text = { Text(text = "Similar Movies") }
+                                            )
+                                        if (movie.collection != null) {
+                                            Tab(
+                                                selected = selectedTabIndex == 1,
+                                                onClick = { selectedTabIndex = 1 },
+                                                text = { Text(text = "Collection") }
+                                            )
+                                        }
 
-                                }
-                                if (selectedTabIndex == 0) {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    MoviesGrid(moviesList = relatedMovies.movieList.map { it.toDomain() }) {
-                                        navController.navigate("movie/${it.id}")
                                     }
-                                }
-                                if (selectedTabIndex == 1) {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    MoviesGrid(moviesList = collection.parts) {
-                                        navController.navigate("movie/${it.id}")
+                                    if (selectedTabIndex == 0) {
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        MoviesGrid(moviesList = relatedMovies.movieList.map { it.toDomain() }) {
+                                            navController.navigate("movie/${it.id}")
+                                        }
+                                    }
+                                    if (selectedTabIndex == 1) {
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        MoviesGrid(moviesList = collection.parts) {
+                                            navController.navigate("movie/${it.id}")
+                                        }
                                     }
                                 }
                             }
-
                         }
-
                     }
                 }
             }
@@ -314,7 +326,7 @@ fun DetailScreen(navController: NavController, detailViewModel: DetailViewModel,
 @Composable
 fun MoviesGrid(moviesList: List<MovieItem>, onClickMovie: (MovieItem) -> Unit) {
     val cols =
-        if (moviesList.size % 3 == 0) moviesList.size / 3 else (moviesList.size / 3).toInt() + 1
+        if (moviesList.size % 3 == 0) moviesList.size / 3 else (moviesList.size / 3) + 1
     val height = cols * 195
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
@@ -342,7 +354,7 @@ fun ProductionCompanyItem(productionCompany: ProductionCompany) {
         Box(
             contentAlignment = Alignment.Center
         ) {
-            if (productionCompany.logo_path.isNullOrBlank()) {
+            if (productionCompany.logo_path.isBlank()) {
                 Text(
                     text = productionCompany.name
                 )
@@ -359,8 +371,7 @@ fun ProductionCompanyItem(productionCompany: ProductionCompany) {
 
 @Composable
 fun Info(title: String, content: String) {
-    Column(
-    ) {
+    Column {
         Text(
             text = title,
             color = Color.Gray,

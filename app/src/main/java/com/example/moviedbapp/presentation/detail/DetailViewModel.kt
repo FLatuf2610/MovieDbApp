@@ -1,6 +1,5 @@
 package com.example.moviedbapp.presentation.detail
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.moviedbapp.domain.useCases.DeleteMovieUseCase
@@ -10,9 +9,9 @@ import com.example.moviedbapp.domain.useCases.GetRelatedMoviesUseCase
 import com.example.moviedbapp.domain.useCases.GetSavedMovieById
 import com.example.moviedbapp.domain.useCases.SaveMovieUseCase
 import com.example.moviedbapp.presentation.detail.model.DetailViewModelState
-import com.example.moviedbapp.presentation.detail.model.DetailViewModelState.Success
 import com.example.moviedbapp.presentation.detail.model.DetailViewModelState.Error
 import com.example.moviedbapp.presentation.detail.model.DetailViewModelState.Loading
+import com.example.moviedbapp.presentation.detail.model.DetailViewModelState.Success
 import com.example.moviedbapp.presentation.models.Collection
 import com.example.moviedbapp.presentation.models.Movie
 import com.example.moviedbapp.presentation.models.MovieList
@@ -42,18 +41,21 @@ class DetailViewModel @Inject constructor(
         private set
 
 
-    fun initViewModel(movieId: Int) {
+    fun initViewModel(movieId: Int, offlineMode: Boolean) {
         viewModelScope.launch {
-            state.value = Loading
-            try {
-                val movie = async { getMovieDetailUseCase(movieId) }.await()
-                val isSaved = getSavedMovieById(movieId) != null
-                movie.isSaved = isSaved
-                getRelatedMovies(movieId)
-                if (movie.collection != null) getCollection(movie.collection.id)
-                state.value = Success(movie)
-            } catch (e: Exception) {
-                state.value = Error(e)
+            if (offlineMode) {
+                val movie = getSavedMovieById(movieId)
+                state.value = Success(movie ?: Movie())
+            } else {
+                try {
+                    state.value = Loading
+                    val movie = async { getMovieDetailUseCase(movieId) }.await()
+                    getRelatedMovies(movieId)
+                    if (movie.collection != null) getCollection(movie.collection.id)
+                    state.value = Success(movie)
+                } catch (e: Exception) {
+                    state.value = Error(e)
+                }
             }
         }
     }
@@ -80,15 +82,16 @@ class DetailViewModel @Inject constructor(
         }
     }
 
-    fun saveMovie(title: String, posterPath: String?, id: Int) {
+    fun saveMovie(movie: Movie) {
         viewModelScope.launch {
-            saveMovieUseCase(id, title, posterPath)
+            movie.isSaved = true
+            saveMovieUseCase(movie)
         }
     }
 
-    fun deleteMovie(title: String, posterPath: String?, id: Int) {
+    fun deleteMovie(movie: Movie) {
         viewModelScope.launch {
-            deleteMovieUseCase(id = id, posterPath = posterPath, title = title)
+            deleteMovieUseCase(movie)
         }
     }
 

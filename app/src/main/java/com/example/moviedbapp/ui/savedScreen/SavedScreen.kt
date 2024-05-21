@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -13,26 +14,57 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavController
+import com.example.moviedbapp.presentation.saved.SavedViewModel
+import com.example.moviedbapp.ui.homeScreen.SearchedMovieItem
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun SavedScreen() {
+fun SavedScreen(viewModel: SavedViewModel, navController: NavController) {
+
+    val movies by viewModel.movies.collectAsState()
+    var backButtonEnabled by remember { mutableStateOf(true) }
+    LaunchedEffect(key1 = Unit) {
+        viewModel.initViewModel()
+    }
+
+
     Scaffold(
-        topBar = { TopAppBar(
-            title = { Text(text = "Saved Movies") },
-            navigationIcon = { IconButton(onClick = { /*TODO*/ }) {
-                Icon(imageVector = Icons.Default.ArrowBack, contentDescription = null)
-            } }
-        ) }
+        topBar = {
+            TopAppBar(
+                title = { Text(text = "Saved Movies") },
+                navigationIcon = {
+                    IconButton(
+                        enabled = backButtonEnabled,
+                        onClick = {
+                            navController.popBackStack()
+                            backButtonEnabled = false
+                        }) {
+                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = null)
+                    }
+                }
+            )
+        }
     ) { pad ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(pad)
         ) {
+            LazyColumn {
+                itemsIndexed(movies) { _, item ->
+                    SearchedMovieItem(movie = item) {
+                        navController.navigate("movie/${it.id}?offlineMode=${true}")
+                    }
+                }
+            }
         }
     }
 }

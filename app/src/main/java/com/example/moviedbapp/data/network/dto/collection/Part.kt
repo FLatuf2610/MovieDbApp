@@ -23,5 +23,6 @@ fun Part.toDomain(): MovieItem {
     return MovieItem(
         posterPath = poster_path,
         id = id,
+        title = title
     )
 }

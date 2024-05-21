@@ -1,20 +1,16 @@
 package com.example.moviedbapp.ui.homeScreen
 
 import android.util.Log
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.gestures.snapping.SnapFlingBehavior
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,7 +22,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -34,6 +29,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
@@ -44,13 +40,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -65,7 +59,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
@@ -79,10 +72,10 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.moviedbapp.data.network.dto.listResponse.Result
 import com.example.moviedbapp.data.network.dto.listResponse.toDomain
-import com.example.moviedbapp.presentation.models.MovieList
 import com.example.moviedbapp.presentation.home.HomeViewModel
 import com.example.moviedbapp.presentation.home.model.HomeViewModelState
 import com.example.moviedbapp.presentation.models.MovieItem
+import com.example.moviedbapp.presentation.models.MovieList
 import com.example.moviedbapp.utils.Constants
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
@@ -135,6 +128,10 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
                         Button(onClick = { viewModel.initViewModel() }) {
                             Text(text = "Try Again")
                         }
+                        Text(text = "Or")
+                        Button(onClick = { navController.navigate("saved") }) {
+                            Text(text = "Go to Saved Movies")
+                        }
                     }
                 }
             }
@@ -170,6 +167,9 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
                             IconButton(onClick = { navController.navigate("search") }) {
                                 Icon(imageVector = Icons.Default.Search, contentDescription = null)
                             }
+                            IconButton(onClick = { navController.navigate("saved") }) {
+                                Icon(imageVector = Icons.Default.Favorite, contentDescription = null)
+                            }
                         }
                     )
                 }
@@ -177,7 +177,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(pad)
+                        .padding(top = pad.calculateTopPadding())
                 ) {
                     Column(
                         modifier = Modifier
@@ -222,6 +222,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
                             }) { movie ->
                             navController.navigate("movie/${movie.id}")
                         }
+                        Spacer(modifier = Modifier.height(32.dp))
                     }
                 }
             }
@@ -371,7 +372,7 @@ fun TopMoviesList(movies: MovieList, pagerState: PagerState, onClick: (Int) -> U
 }
 
 @Composable
-fun SearchedMovieItem(movie: Result, onClickMovie: (Result) -> Unit) {
+fun SearchedMovieItem(movie: MovieItem, onClickMovie: (MovieItem) -> Unit) {
     Surface(
         onClick = { onClickMovie(movie) },
         modifier = Modifier.fillMaxWidth(),
@@ -387,7 +388,7 @@ fun SearchedMovieItem(movie: Result, onClickMovie: (Result) -> Unit) {
                 modifier = Modifier.size(80.dp)
             ) {
                 AsyncImage(
-                    model = Constants.IMAGE_BASE_URL + movie.poster_path,
+                    model = Constants.IMAGE_BASE_URL + movie.posterPath,
                     contentDescription = null,
                     contentScale = ContentScale.Crop
                 )
@@ -398,6 +399,7 @@ fun SearchedMovieItem(movie: Result, onClickMovie: (Result) -> Unit) {
                 text = movie.title,
                 fontSize = 16.sp,
             )
+            Spacer(modifier = Modifier.width(8.dp))
             Icon(Icons.Default.KeyboardArrowRight, null)
         }
     }
@@ -459,14 +461,13 @@ fun SearchScreen(viewModel: HomeViewModel, navController: NavController) {
                     state = lazyColumnState
                 ) {
                     itemsIndexed(searchedMovies.movieList) { index, movie ->
-                        SearchedMovieItem(movie = movie) {
+                        SearchedMovieItem(movie = movie.toDomain()) {
                             navController.navigate("movie/${it.id}")
                             keyboardState?.hide()
                         }
                         if (index == searchedMovies.movieList.lastIndex - 5) {
                             LaunchedEffect(Unit) {
                                 viewModel.searchMovie(searchedMovies.page + 1)
-                                Log.i("TERMINA SCROLL", searchedMovies.page.toString())
                             }
                         }
                     }
