@@ -44,12 +44,15 @@ class DetailViewModel @Inject constructor(
     fun initViewModel(movieId: Int, offlineMode: Boolean) {
         viewModelScope.launch {
             if (offlineMode) {
-                val movie = getSavedMovieById(movieId)
-                state.value = Success(movie ?: Movie())
+                state.value = Loading
+                val movie = getSavedMovieById(movieId)!!
+                state.value = Success(movie)
             } else {
                 try {
                     state.value = Loading
                     val movie = async { getMovieDetailUseCase(movieId) }.await()
+                    val isSaved = getSavedMovieById(movieId) != null
+                    movie.isSaved = isSaved
                     getRelatedMovies(movieId)
                     if (movie.collection != null) getCollection(movie.collection.id)
                     state.value = Success(movie)

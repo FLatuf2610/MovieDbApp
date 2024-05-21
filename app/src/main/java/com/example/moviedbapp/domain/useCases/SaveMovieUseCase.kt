@@ -1,6 +1,5 @@
 package com.example.moviedbapp.domain.useCases
 
-import com.example.moviedbapp.data.network.local.entities.MovieEntity
 import com.example.moviedbapp.data.repository.MoviesRepositoryImpl
 import com.example.moviedbapp.presentation.models.Movie
 import com.example.moviedbapp.presentation.models.toEntity

@@ -10,7 +10,7 @@ class GetRelatedMoviesUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(movieId: Int, page: Int): MovieList {
         val response = repositoryImpl.getRelatedMovies(movieId, page).toDomain()
-        val newList = response.movieList.slice(0..17)
+        val newList = response.movieList.slice(0..11)
         return response.copy(movieList = newList)
     }
 }

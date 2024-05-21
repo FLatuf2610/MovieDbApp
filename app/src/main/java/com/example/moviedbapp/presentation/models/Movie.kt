@@ -3,7 +3,8 @@ package com.example.moviedbapp.presentation.models
 import com.example.moviedbapp.data.network.dto.movieDetail.BelongsToCollection
 import com.example.moviedbapp.data.network.dto.movieDetail.ProductionCompany
 import com.example.moviedbapp.data.network.dto.movieDetail.SpokenLanguage
-import com.example.moviedbapp.data.network.local.entities.MovieEntity
+import com.example.moviedbapp.data.local.entities.MovieEntity
+import com.google.gson.annotations.SerializedName
 
 data class Movie(
     val backDropPath: String? = "",
@@ -18,10 +19,13 @@ data class Movie(
     val title: String = "",
     val runtime: Int = 0,
     val tagline: String = "",
-    val spoken_languages: List<SpokenLanguage> = emptyList(),
-    val origin_country: List<String> = emptyList(),
-    val original_language: String = "",
-    var isSaved: Boolean = false
+    @SerializedName("spoken_languages")
+    val spokenLanguages: List<SpokenLanguage> = emptyList(),
+    @SerializedName("origin_country")
+    val originCountry: List<String> = emptyList(),
+    @SerializedName("original_language")
+    val originalLanguage: String = "",
+    var isSaved: Boolean = true,
 )
 fun Movie.toEntity() =
     MovieEntity(
@@ -35,6 +39,6 @@ fun Movie.toEntity() =
         realeseDate = realeseDate,
         runtime = runtime,
         tagline = tagline,
-        original_language = original_language,
+        original_language = originalLanguage,
         isSaved = isSaved
     )

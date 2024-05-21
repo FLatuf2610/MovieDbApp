@@ -1,7 +1,11 @@
 package com.example.moviedbapp.data.network.dto.movieDetail
 
+import com.google.gson.annotations.SerializedName
+
 data class SpokenLanguage(
-    val english_name: String,
-    val iso_639_1: String,
+    @SerializedName("english_name")
+    val englishName: String,
+    @SerializedName("iso_3166_1")
+    val iso31661: String,
     val name: String
 )

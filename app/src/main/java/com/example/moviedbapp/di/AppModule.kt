@@ -3,8 +3,8 @@ package com.example.moviedbapp.di
 import android.content.Context
 import androidx.room.Room
 import com.example.moviedbapp.data.network.apiClient.MovieDbApiClient
-import com.example.moviedbapp.data.network.local.MoviesDatabase
-import com.example.moviedbapp.data.network.local.dao.MoviesDao
+import com.example.moviedbapp.data.local.MoviesDatabase
+import com.example.moviedbapp.data.local.dao.MoviesDao
 import com.example.moviedbapp.utils.AuthInterceptor
 import com.example.moviedbapp.utils.Constants
 import dagger.Module

@@ -67,7 +67,8 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    suspend fun getTopMovies(page: Int) {
+
+    private suspend fun getTopMovies(page: Int) {
         try {
             val topMovies = getTopRatedMovies(page)
             if (page == 1) {

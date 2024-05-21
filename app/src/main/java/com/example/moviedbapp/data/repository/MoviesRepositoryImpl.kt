@@ -4,8 +4,8 @@ import com.example.moviedbapp.data.network.apiClient.MovieDbApiClient
 import com.example.moviedbapp.data.network.dto.collection.CollectionResponseDto
 import com.example.moviedbapp.data.network.dto.listResponse.ListResponseDto
 import com.example.moviedbapp.data.network.dto.movieDetail.MovieDetailResponseDto
-import com.example.moviedbapp.data.network.local.dao.MoviesDao
-import com.example.moviedbapp.data.network.local.entities.MovieEntity
+import com.example.moviedbapp.data.local.dao.MoviesDao
+import com.example.moviedbapp.data.local.entities.MovieEntity
 import com.example.moviedbapp.domain.repository.MoviesRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow

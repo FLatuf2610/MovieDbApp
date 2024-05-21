@@ -1,10 +1,10 @@
-package com.example.moviedbapp.data.network.local.dao
+package com.example.moviedbapp.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
-import com.example.moviedbapp.data.network.local.entities.MovieEntity
+import com.example.moviedbapp.data.local.entities.MovieEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

@@ -13,18 +13,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
+import androidx.compose.material.icons.filled.BookmarkAdded
+import androidx.compose.material.icons.outlined.BookmarkAdd
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,7 +32,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -42,9 +40,11 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -52,21 +52,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.moviedbapp.data.network.dto.listResponse.toDomain
-import com.example.moviedbapp.data.network.dto.movieDetail.ProductionCompany
 import com.example.moviedbapp.presentation.detail.DetailViewModel
 import com.example.moviedbapp.presentation.detail.model.DetailViewModelState
 import com.example.moviedbapp.presentation.models.MovieItem
 import com.example.moviedbapp.ui.homeScreen.MovieItem
 import com.example.moviedbapp.utils.Constants
 import com.example.moviedbapp.utils.DateFormatter
+import kotlinx.coroutines.Dispatchers
 import retrofit2.HttpException
 import java.io.IOException
 
@@ -79,7 +82,7 @@ fun DetailScreen(
     movieId: Int,
     offlineMode: Boolean
 ) {
-    LaunchedEffect(Unit) {
+    LaunchedEffect(movieId) {
         detailViewModel.initViewModel(movieId, offlineMode)
     }
     val state by detailViewModel.state.collectAsState()
@@ -95,7 +98,7 @@ fun DetailScreen(
                                 onClick = { navController.popBackStack() }
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.ArrowBack,
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBackIos,
                                     contentDescription = null
                                 )
                             }
@@ -140,15 +143,16 @@ fun DetailScreen(
         is DetailViewModelState.Success -> {
             val successState = state as DetailViewModelState.Success
             val movie = successState.movie
-            var isSaved by rememberSaveable { mutableStateOf(movie.isSaved) }
+            var isSaved by remember { mutableStateOf(movie.isSaved) }
             val relatedMovies by detailViewModel.relatedMovies.collectAsState()
             val collection by detailViewModel.collectionMovies.collectAsState()
             val gradientBrush = Brush.verticalGradient(
                 colors = listOf(Color.Black, Color.Transparent),
             )
-            val containerScrollState = rememberScrollState()
+            val containerScrollState = rememberLazyListState()
+            val firstVisibleItemIndex by remember { derivedStateOf { containerScrollState.firstVisibleItemIndex } }
             val tColor =
-                if (containerScrollState.value <= 275) Color.Transparent else MaterialTheme.colorScheme.background
+                if (firstVisibleItemIndex < 1) Color.Transparent else MaterialTheme.colorScheme.background
             val containerColor by animateColorAsState(targetValue = tColor, label = "")
             var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
             var buttonBackEnabled by rememberSaveable { mutableStateOf(true) }
@@ -156,7 +160,7 @@ fun DetailScreen(
                 topBar = {
                     TopAppBar(
                         title = {
-                            if (containerScrollState.value > 275) {
+                            if (firstVisibleItemIndex >= 1) {
                                 Text(text = movie.title)
                             } else Text(
                                 text = ""
@@ -169,11 +173,15 @@ fun DetailScreen(
                                     navController.popBackStack()
                                 },
                                 colors = IconButtonDefaults.iconButtonColors(
-                                    contentColor = if (containerScrollState.value <= 275) Color.White else MaterialTheme.colorScheme.onBackground
+                                    contentColor = if (firstVisibleItemIndex < 1)
+                                        Color.White else MaterialTheme.colorScheme.onBackground
                                 ),
                                 enabled = buttonBackEnabled
                             ) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = null)
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowBackIos,
+                                    contentDescription = null
+                                )
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
@@ -181,13 +189,18 @@ fun DetailScreen(
                         ),
                         actions = {
                             if (isSaved) {
-                                IconButton(onClick = {
+                                IconButton(
+                                    colors = IconButtonDefaults.iconButtonColors(
+                                        contentColor = if (firstVisibleItemIndex < 1)
+                                            Color.White else MaterialTheme.colorScheme.onBackground
+                                    ),
+                                    onClick = {
                                     detailViewModel.deleteMovie(movie)
                                     isSaved = false
                                     if (offlineMode) navController.popBackStack()
                                 }) {
                                     Icon(
-                                        imageVector = Icons.Filled.Favorite,
+                                        imageVector = Icons.Filled.BookmarkAdded,
                                         contentDescription = null
                                     )
                                 }
@@ -197,7 +210,7 @@ fun DetailScreen(
                                     isSaved = true
                                 }) {
                                     Icon(
-                                        imageVector = Icons.Outlined.FavoriteBorder,
+                                        imageVector = Icons.Outlined.BookmarkAdd,
                                         contentDescription = null
                                     )
                                 }
@@ -206,25 +219,26 @@ fun DetailScreen(
                     )
                 }
             ) { _ ->
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(containerScrollState)
-
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    state = containerScrollState
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                    ) {
+                    item {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                         ) {
 
                             AsyncImage(
-                                model = Constants.IMAGE_BASE_URL + movie.posterPath,
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(Constants.IMAGE_BASE_URL + movie.posterPath)
+                                    .crossfade(true)
+                                    .dispatcher(Dispatchers.IO)
+                                    .build(),
                                 contentDescription = null,
                                 contentScale = ContentScale.FillWidth,
+                                filterQuality = FilterQuality.Low,
                                 modifier = Modifier
                                     .fillMaxWidth()
                             )
@@ -235,6 +249,9 @@ fun DetailScreen(
                                     .background(gradientBrush)
                             )
                         }
+                    }
+
+                    item {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -323,11 +340,12 @@ fun DetailScreen(
     }
 }
 
+
 @Composable
 fun MoviesGrid(moviesList: List<MovieItem>, onClickMovie: (MovieItem) -> Unit) {
     val cols =
         if (moviesList.size % 3 == 0) moviesList.size / 3 else (moviesList.size / 3) + 1
-    val height = cols * 195
+    val height = cols * 175
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
         modifier = Modifier
@@ -338,34 +356,10 @@ fun MoviesGrid(moviesList: List<MovieItem>, onClickMovie: (MovieItem) -> Unit) {
 
     ) {
         items(moviesList) { movie ->
-            MovieItem(movie = movie, width = 80, height = 190) {
+            MovieItem(movie = movie, width = 60, height = 170) {
                 onClickMovie(it)
             }
         }
-    }
-}
-
-@Composable
-fun ProductionCompanyItem(productionCompany: ProductionCompany) {
-    Surface(
-        onClick = { /*TODO*/ },
-        modifier = Modifier.size(124.dp),
-    ) {
-        Box(
-            contentAlignment = Alignment.Center
-        ) {
-            if (productionCompany.logo_path.isBlank()) {
-                Text(
-                    text = productionCompany.name
-                )
-            }
-            AsyncImage(
-                model = Constants.IMAGE_BASE_URL + productionCompany.logo_path,
-                contentDescription = null,
-                contentScale = ContentScale.FillWidth,
-            )
-        }
-
     }
 }
 

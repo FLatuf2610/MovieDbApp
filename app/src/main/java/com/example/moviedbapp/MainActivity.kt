@@ -22,6 +22,7 @@ import com.example.moviedbapp.ui.detailScreen.DetailScreen
 import com.example.moviedbapp.ui.homeScreen.HomeScreen
 import com.example.moviedbapp.ui.homeScreen.SearchScreen
 import com.example.moviedbapp.ui.savedScreen.SavedScreen
+import com.example.moviedbapp.ui.splashScreen.SplashScreen
 import com.example.moviedbapp.ui.theme.MovieDbAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -43,7 +44,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
 
-                    NavHost(navController = navController, startDestination = "home") {
+                    NavHost(navController = navController, startDestination = "splash") {
                         composable("home") {
                             HomeScreen(navController = navController, viewModel = homeViewModel)
                         }
@@ -68,6 +69,9 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("saved") {
                             SavedScreen(viewModel = savedViewModel, navController = navController)
+                        }
+                        composable("splash") {
+                            SplashScreen(navController = navController)
                         }
                     }
                 }

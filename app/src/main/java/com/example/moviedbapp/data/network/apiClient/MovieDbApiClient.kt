@@ -3,7 +3,6 @@ package com.example.moviedbapp.data.network.apiClient
 import com.example.moviedbapp.data.network.dto.collection.CollectionResponseDto
 import com.example.moviedbapp.data.network.dto.listResponse.ListResponseDto
 import com.example.moviedbapp.data.network.dto.movieDetail.MovieDetailResponseDto
-import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query

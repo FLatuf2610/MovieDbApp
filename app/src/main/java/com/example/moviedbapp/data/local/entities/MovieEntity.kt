@@ -1,15 +1,17 @@
-package com.example.moviedbapp.data.network.local.entities
+package com.example.moviedbapp.data.local.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.example.moviedbapp.presentation.models.Movie
 import com.example.moviedbapp.presentation.models.MovieItem
+import com.google.gson.annotations.SerializedName
 
 @Entity(tableName = "movie_entity")
 data class MovieEntity(
     @PrimaryKey(autoGenerate = false)
     val id: Int,
-    val poster_path: String?,
+    @SerializedName("poster_path")
+    val posterPath: String?,
     val title: String,
     val backDropPath: String?,
     val budget: Long,
@@ -18,7 +20,8 @@ data class MovieEntity(
     val realeseDate: String,
     val runtime: Int,
     val tagline: String,
-    val original_language: String,
+    @SerializedName("original_language")
+    val originalLanguage: String,
     var isSaved: Boolean
 )
 fun MovieEntity.toDomain(): Movie =
@@ -28,13 +31,13 @@ fun MovieEntity.toDomain(): Movie =
         budget = budget,
         overview = overview,
         popularity = popularity,
-        posterPath = poster_path,
+        posterPath = posterPath,
         realeseDate = realeseDate,
         title = title,
         runtime = runtime,
         tagline = tagline,
-        original_language = original_language,
+        originalLanguage =  originalLanguage,
         isSaved = isSaved
     )
 fun MovieEntity.toListItem() =
-    MovieItem(poster_path, id, title)
+    MovieItem(posterPath, id, title)

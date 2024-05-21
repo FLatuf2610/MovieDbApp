@@ -24,13 +24,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
+import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
+import androidx.compose.material.icons.filled.BookmarkAdded
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
@@ -58,25 +56,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.moviedbapp.data.network.dto.listResponse.Result
 import com.example.moviedbapp.data.network.dto.listResponse.toDomain
 import com.example.moviedbapp.presentation.home.HomeViewModel
 import com.example.moviedbapp.presentation.home.model.HomeViewModelState
 import com.example.moviedbapp.presentation.models.MovieItem
 import com.example.moviedbapp.presentation.models.MovieList
 import com.example.moviedbapp.utils.Constants
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
@@ -168,7 +166,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
                                 Icon(imageVector = Icons.Default.Search, contentDescription = null)
                             }
                             IconButton(onClick = { navController.navigate("saved") }) {
-                                Icon(imageVector = Icons.Default.Favorite, contentDescription = null)
+                                Icon(imageVector = Icons.Filled.BookmarkAdded, contentDescription = null)
                             }
                         }
                     )
@@ -179,50 +177,55 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
                         .fillMaxSize()
                         .padding(top = pad.calculateTopPadding())
                 ) {
-                    Column(
+                    LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .verticalScroll(rememberScrollState())
                     ) {
-                        val pagerState = rememberPagerState {
-                            topMovies.movieList.size
+                        item {
+                            val pagerState = rememberPagerState {
+                                topMovies.movieList.size
+                            }
+                            TopMoviesList(movies = topMovies, pagerState = pagerState) {
+                                navController.navigate("movie/$it")
+                            }
                         }
-                        TopMoviesList(movies = topMovies, pagerState = pagerState) {
-                            navController.navigate("movie/$it")
+
+                        item {
+                            MoviesList(
+                                titleSection = "Most Popular Movies",
+                                list = popularMovies,
+                                onFinishScroll = {
+                                    scope.launch {
+                                        viewModel.getPopularMovies(it)
+                                    }
+                                }) { movie ->
+                                navController.navigate("movie/${movie.id}")
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+                            MoviesList(
+                                titleSection = "Movies in Theatre",
+                                list = nowMovies,
+                                onFinishScroll = {
+                                    scope.launch {
+                                        viewModel.getNowMovies(it)
+                                    }
+                                }) { movie ->
+                                navController.navigate("movie/${movie.id}")
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+                            MoviesList(
+                                titleSection = "Upcoming Movies",
+                                list = upComingMovies,
+                                onFinishScroll = {
+                                    scope.launch {
+                                        viewModel.getUpComingMovies(it)
+                                    }
+                                }) { movie ->
+                                navController.navigate("movie/${movie.id}")
+                            }
+                            Spacer(modifier = Modifier.height(32.dp))
                         }
-                        MoviesList(
-                            titleSection = "Most Popular Movies",
-                            list = popularMovies,
-                            onFinishScroll = {
-                                scope.launch {
-                                    viewModel.getPopularMovies(it)
-                                }
-                            }) { movie ->
-                            navController.navigate("movie/${movie.id}")
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        MoviesList(
-                            titleSection = "Movies in Theatre",
-                            list = nowMovies,
-                            onFinishScroll = {
-                                scope.launch {
-                                    viewModel.getNowMovies(it)
-                                }
-                            }) { movie ->
-                            navController.navigate("movie/${movie.id}")
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        MoviesList(
-                            titleSection = "Upcoming Movies",
-                            list = upComingMovies,
-                            onFinishScroll = {
-                                scope.launch {
-                                    viewModel.getUpComingMovies(it)
-                                }
-                            }) { movie ->
-                            navController.navigate("movie/${movie.id}")
-                        }
-                        Spacer(modifier = Modifier.height(32.dp))
+
                     }
                 }
             }
@@ -260,7 +263,7 @@ fun MoviesList(
             MovieItem(movie = movie) {
                 onClickMovie(it)
             }
-            if (index == list.movieList.lastIndex - 3)
+            if (index == list.movieList.lastIndex)
                 LaunchedEffect(Unit) {
                     val newPage = list.page + 1
                     onFinishScroll(newPage)
@@ -272,7 +275,7 @@ fun MoviesList(
 
 
 @Composable
-fun MovieItem(movie: MovieItem, width: Int = 140, height: Int = 200, onClickMovie: (MovieItem) -> Unit) {
+fun MovieItem(movie: MovieItem, width: Int = 112, height: Int = 160, onClickMovie: (MovieItem) -> Unit) {
     Card(
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))
@@ -284,33 +287,13 @@ fun MovieItem(movie: MovieItem, width: Int = 140, height: Int = 200, onClickMovi
             model = ImageRequest.Builder(LocalContext.current)
                 .data(Constants.IMAGE_BASE_URL + movie.posterPath)
                 .crossfade(true)
+                .crossfade(500)
                 .build(),
             contentScale = ContentScale.Crop,
             placeholder = null,
             contentDescription = null,
-            modifier = Modifier.fillMaxSize()
-        )
-    }
-}
-
-@Preview
-@Composable
-fun MovieItemPreview() {
-    Card(
-        modifier = Modifier
-            .height(275.dp)
-            .width(200.dp)
-            .clip(RoundedCornerShape(12.dp))
-    ) {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPQ9lCyEVXExqW_a4e6yB4rf8hLuOhyrzyS2GdTux7LQ&s")
-                .crossfade(true)
-                .build(),
-            contentScale = ContentScale.Crop,
-            placeholder = null,
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
+            filterQuality = FilterQuality.Low
         )
     }
 }
@@ -343,12 +326,17 @@ fun TopMoviesList(movies: MovieList, pagerState: PagerState, onClick: (Int) -> U
                     .focusable()
             ) {
                 AsyncImage(
-                    model = Constants.IMAGE_BASE_URL + movie.poster_path,
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(Constants.IMAGE_BASE_URL + movie.posterPath)
+                        .crossfade(true)
+                        .dispatcher(Dispatchers.IO)
+                        .build(),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     placeholder = null,
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxWidth(),
+                    filterQuality = FilterQuality.Low
                     )
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -388,9 +376,14 @@ fun SearchedMovieItem(movie: MovieItem, onClickMovie: (MovieItem) -> Unit) {
                 modifier = Modifier.size(80.dp)
             ) {
                 AsyncImage(
-                    model = Constants.IMAGE_BASE_URL + movie.posterPath,
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(Constants.IMAGE_BASE_URL + movie.posterPath)
+                        .crossfade(true)
+                        .dispatcher(Dispatchers.IO)
+                        .build(),
                     contentDescription = null,
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
+                    filterQuality = FilterQuality.Low
                 )
             }
             Spacer(modifier = Modifier.width(16.dp))
@@ -400,7 +393,7 @@ fun SearchedMovieItem(movie: MovieItem, onClickMovie: (MovieItem) -> Unit) {
                 fontSize = 16.sp,
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Icon(Icons.Default.KeyboardArrowRight, null)
+            Icon(Icons.AutoMirrored.Outlined.ArrowForwardIos, null)
         }
     }
 }
@@ -443,7 +436,7 @@ fun SearchScreen(viewModel: HomeViewModel, navController: NavController) {
                     }
                     ) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBackIos,
                             contentDescription = null
                         )
                     }
