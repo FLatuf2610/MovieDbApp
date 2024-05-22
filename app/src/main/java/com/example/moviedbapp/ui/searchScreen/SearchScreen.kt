@@ -181,7 +181,7 @@ fun SearchScreen(viewModel: SearchViewModel, navController: NavController) {
                             navController.navigate("movie/${it.id}")
                             keyboardState?.hide()
                         }
-                        if (index == searchedMovies.movieList.lastIndex - 5) {
+                        if (index == searchedMovies.movieList.lastIndex) {
                             LaunchedEffect(Unit) {
                                 viewModel.searchMovie(searchedMovies.page + 1)
                             }

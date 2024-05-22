@@ -1,5 +1,8 @@
 package com.example.moviedbapp.presentation.home
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.moviedbapp.domain.useCases.GetNowPlayingMoviesUseCase
@@ -30,12 +33,15 @@ class HomeViewModel @Inject constructor(
 
     private val _upComingMovies = MutableStateFlow(MovieList())
     val upComingMovies: StateFlow<MovieList> = _upComingMovies
+    var upComingMoviesLoading by mutableStateOf(true)
 
     private val _popularMovies = MutableStateFlow(MovieList())
     val popularMovies: StateFlow<MovieList> = _popularMovies
+    var popularMoviesLoading by mutableStateOf(true)
 
     private val _nowMovies = MutableStateFlow(MovieList())
     val nowMovies: StateFlow<MovieList> = _nowMovies
+    var nowMoviesLoading by mutableStateOf(true)
 
     fun initViewModel() {
         viewModelScope.launch {
@@ -72,16 +78,19 @@ class HomeViewModel @Inject constructor(
     }
 
     suspend fun getPopularMovies(page: Int) {
+        popularMoviesLoading = true
         try {
             val popularMovies = getPopularMoviesUseCase(page)
             if (page == 1) {
                 _popularMovies.value = popularMovies
+                popularMoviesLoading = false
             }
             else {
                 val auxList = _popularMovies.value.movieList.toMutableList()
                 auxList.addAll(popularMovies.movieList)
                 val newState = _popularMovies.value.copy(page = page, movieList = auxList)
                 _popularMovies.value = newState
+                popularMoviesLoading= false
             }
         } catch (e: Exception) {
             throw e
@@ -89,16 +98,19 @@ class HomeViewModel @Inject constructor(
     }
 
     suspend fun getUpComingMovies(page: Int) {
+        upComingMoviesLoading = true
         try {
             val upComingMovies= getUpComingMoviesUseCase(page)
             if (page == 1) {
                 _upComingMovies.value = upComingMovies
+                upComingMoviesLoading = false
             }
             else {
                 val auxList = _upComingMovies.value.movieList.toMutableList()
                 auxList.addAll(upComingMovies.movieList)
                 val newState = _upComingMovies.value.copy(page = page, movieList = auxList)
                 _upComingMovies.value = newState
+                upComingMoviesLoading = false
             }
         } catch (e: Exception) {
             throw e
@@ -107,15 +119,18 @@ class HomeViewModel @Inject constructor(
 
     suspend fun getNowMovies(page: Int) {
         try {
+            nowMoviesLoading = true
             val nowMovies = getNowPlayingMoviesUseCase(page)
             if (page == 1) {
                 _nowMovies.value = nowMovies
+                nowMoviesLoading = false
             }
             else {
                 val auxList = _nowMovies.value.movieList.toMutableList()
                 auxList.addAll(nowMovies.movieList)
                 val newState = _nowMovies.value.copy(page = page, movieList = auxList)
                 _nowMovies.value = newState
+                nowMoviesLoading = false
             }
         } catch (e: Exception) {
             throw e

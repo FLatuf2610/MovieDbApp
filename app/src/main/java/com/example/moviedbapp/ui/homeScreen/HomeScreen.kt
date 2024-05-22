@@ -181,6 +181,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
                             MoviesList(
                                 titleSection = "Most Popular Movies",
                                 list = popularMovies,
+                                isLoading = viewModel.popularMoviesLoading,
                                 onFinishScroll = {
                                     scope.launch {
                                         viewModel.getPopularMovies(it)
@@ -192,6 +193,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
                             MoviesList(
                                 titleSection = "Movies in Theatre",
                                 list = nowMovies,
+                                isLoading = viewModel.nowMoviesLoading,
                                 onFinishScroll = {
                                     scope.launch {
                                         viewModel.getNowMovies(it)
@@ -203,6 +205,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
                             MoviesList(
                                 titleSection = "Upcoming Movies",
                                 list = upComingMovies,
+                                isLoading = viewModel.upComingMoviesLoading,
                                 onFinishScroll = {
                                     scope.launch {
                                         viewModel.getUpComingMovies(it)
@@ -228,6 +231,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
 fun MoviesList(
     titleSection: String,
     list: MovieList,
+    isLoading: Boolean,
     onFinishScroll: (page: Int) -> Unit,
     onClickMovie: (MovieItem) -> Unit
 ) {
@@ -242,6 +246,7 @@ fun MoviesList(
     LazyRow(
         state = lazyRowState,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         stickyHeader {
             Spacer(modifier = Modifier.width(8.dp))
@@ -256,6 +261,9 @@ fun MoviesList(
                     onFinishScroll(newPage)
                     Log.i("FINAL DEL SCROLL", newPage.toString())
                 }
+        }
+        if (isLoading && list.movieList.isNotEmpty()) {
+            item { CircularProgressIndicator() }
         }
     }
 }
