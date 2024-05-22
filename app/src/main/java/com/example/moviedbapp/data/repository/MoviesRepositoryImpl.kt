@@ -91,5 +91,11 @@ class MoviesRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getTrendingMovies(): ListResponseDto {
+        return  withContext(Dispatchers.IO) {
+            apiClient.getTrendingMovies()
+        }
+    }
+
 
 }

@@ -31,4 +31,6 @@ interface MoviesRepository {
     suspend fun getAllMoviesFromDb(): Flow<List<MovieEntity>>
 
     suspend fun deleteMovie(movieEntity: MovieEntity)
+
+    suspend fun getTrendingMovies(): ListResponseDto
 }

@@ -1,21 +1,14 @@
 package com.example.moviedbapp.presentation.home
 
-import android.util.Log
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.moviedbapp.domain.useCases.GetNowPlayingMoviesUseCase
 import com.example.moviedbapp.domain.useCases.GetPopularMoviesUseCase
 import com.example.moviedbapp.domain.useCases.GetTopRatedMovies
 import com.example.moviedbapp.domain.useCases.GetUpComingMoviesUseCase
-import com.example.moviedbapp.domain.useCases.SearchMovieUseCase
-import com.example.moviedbapp.presentation.models.MovieList
 import com.example.moviedbapp.presentation.home.model.HomeViewModelState
+import com.example.moviedbapp.presentation.models.MovieList
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -24,7 +17,6 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val getTopRatedMovies: GetTopRatedMovies,
-    private val searchMovieUseCase: SearchMovieUseCase,
     private val getUpComingMoviesUseCase: GetUpComingMoviesUseCase,
     private val getPopularMoviesUseCase: GetPopularMoviesUseCase,
     private val getNowPlayingMoviesUseCase: GetNowPlayingMoviesUseCase
@@ -44,13 +36,6 @@ class HomeViewModel @Inject constructor(
 
     private val _nowMovies = MutableStateFlow(MovieList())
     val nowMovies: StateFlow<MovieList> = _nowMovies
-
-    private val _searchedMovies = MutableStateFlow(MovieList())
-    val searchedMovies: StateFlow<MovieList> =  _searchedMovies
-
-    private var queryJob: Job? = null
-
-    var queryString by mutableStateOf("")
 
     fun initViewModel() {
         viewModelScope.launch {
@@ -136,29 +121,5 @@ class HomeViewModel @Inject constructor(
             throw e
         }
     }
-
-    fun searchMovie(page: Int) {
-        queryJob = null
-
-        queryJob = viewModelScope.launch {
-            delay(500)
-            try {
-                val response = searchMovieUseCase(queryString, page)
-                if (page == 1) {
-                    _searchedMovies.value = response
-                }
-                else {
-                    val auxList = _searchedMovies.value.movieList.toMutableList()
-                    auxList.addAll(response.movieList)
-                    val newState = _searchedMovies.value.copy(page = page, movieList = auxList)
-                    _searchedMovies.value = newState
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                Log.e("ERROR", e.message!!)
-            }
-        }
-    }
-
 
 }

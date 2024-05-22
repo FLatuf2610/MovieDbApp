@@ -51,4 +51,7 @@ interface MovieDbApiClient {
         @Path("id") id: Int
     ): CollectionResponseDto
 
+    @GET("trending/movie/week")
+    suspend fun getTrendingMovies(): ListResponseDto
+
 }

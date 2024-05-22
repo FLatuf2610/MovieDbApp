@@ -24,7 +24,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import com.example.moviedbapp.presentation.saved.SavedViewModel
-import com.example.moviedbapp.ui.homeScreen.SearchedMovieItem
+import com.example.moviedbapp.ui.searchScreen.SearchedMovieItem
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

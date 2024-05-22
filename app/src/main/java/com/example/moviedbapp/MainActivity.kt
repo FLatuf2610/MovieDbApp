@@ -18,10 +18,11 @@ import androidx.navigation.navArgument
 import com.example.moviedbapp.presentation.detail.DetailViewModel
 import com.example.moviedbapp.presentation.home.HomeViewModel
 import com.example.moviedbapp.presentation.saved.SavedViewModel
+import com.example.moviedbapp.presentation.search.SearchViewModel
 import com.example.moviedbapp.ui.detailScreen.DetailScreen
 import com.example.moviedbapp.ui.homeScreen.HomeScreen
-import com.example.moviedbapp.ui.homeScreen.SearchScreen
 import com.example.moviedbapp.ui.savedScreen.SavedScreen
+import com.example.moviedbapp.ui.searchScreen.SearchScreen
 import com.example.moviedbapp.ui.splashScreen.SplashScreen
 import com.example.moviedbapp.ui.theme.MovieDbAppTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -36,6 +37,7 @@ class MainActivity : ComponentActivity() {
             val homeViewModel: HomeViewModel = hiltViewModel()
             val detailViewModel: DetailViewModel = hiltViewModel()
             val savedViewModel: SavedViewModel = hiltViewModel()
+            val searchViewModel: SearchViewModel = hiltViewModel()
             val navController = rememberNavController()
             MovieDbAppTheme {
                 // A surface container using the 'background' color from the theme
@@ -65,7 +67,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable("search") {
-                            SearchScreen(viewModel = homeViewModel, navController)
+                            SearchScreen(viewModel = searchViewModel,navController = navController)
                         }
                         composable("saved") {
                             SavedScreen(viewModel = savedViewModel, navController = navController)
