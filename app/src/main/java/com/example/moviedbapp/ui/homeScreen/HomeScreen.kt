@@ -287,7 +287,9 @@ fun MovieItem(movie: MovieItem, width: Int = 112, height: Int = 160, onClickMovi
             model = ImageRequest.Builder(LocalContext.current)
                 .data(Constants.IMAGE_BASE_URL + movie.posterPath)
                 .crossfade(true)
-                .crossfade(500)
+                .crossfade(250)
+                .size(144)
+                .dispatcher(Dispatchers.IO)
                 .build(),
             contentScale = ContentScale.Crop,
             placeholder = null,
@@ -329,6 +331,7 @@ fun TopMoviesList(movies: MovieList, pagerState: PagerState, onClick: (Int) -> U
                     model = ImageRequest.Builder(LocalContext.current)
                         .data(Constants.IMAGE_BASE_URL + movie.posterPath)
                         .crossfade(true)
+                        .size(480)
                         .dispatcher(Dispatchers.IO)
                         .build(),
                     contentDescription = null,
@@ -379,11 +382,12 @@ fun SearchedMovieItem(movie: MovieItem, onClickMovie: (MovieItem) -> Unit) {
                     model = ImageRequest.Builder(LocalContext.current)
                         .data(Constants.IMAGE_BASE_URL + movie.posterPath)
                         .crossfade(true)
+                        .size(240)
                         .dispatcher(Dispatchers.IO)
                         .build(),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-                    filterQuality = FilterQuality.Low
+                    filterQuality = FilterQuality.Low,
                 )
             }
             Spacer(modifier = Modifier.width(16.dp))

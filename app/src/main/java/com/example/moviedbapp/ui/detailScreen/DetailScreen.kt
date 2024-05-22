@@ -52,7 +52,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -118,7 +117,7 @@ fun DetailScreen(
                         when (errorState.exc) {
                             is IOException -> "A network error happened, please check your internet connection"
                             is HttpException -> "A server error happened, please try again later"
-                            else -> "An error occurred, please try again later"
+                            else -> errorState.exc.message.toString()
                         },
                         textAlign = TextAlign.Center
                     )
@@ -238,7 +237,6 @@ fun DetailScreen(
                                     .build(),
                                 contentDescription = null,
                                 contentScale = ContentScale.FillWidth,
-                                filterQuality = FilterQuality.Low,
                                 modifier = Modifier
                                     .fillMaxWidth()
                             )
