@@ -5,7 +5,7 @@ import androidx.room.Room
 import com.example.moviedbapp.data.network.apiClient.MovieDbApiClient
 import com.example.moviedbapp.data.local.MoviesDatabase
 import com.example.moviedbapp.data.local.dao.MoviesDao
-import com.example.moviedbapp.utils.AuthInterceptor
+import com.example.moviedbapp.data.network.interceptor.AuthInterceptor
 import com.example.moviedbapp.utils.Constants
 import dagger.Module
 import dagger.Provides
@@ -21,13 +21,12 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
-    private val client = OkHttpClient.Builder()
-        .addInterceptor(AuthInterceptor(Constants.READ_TOKEN))
-        .build()
-
     @Singleton
     @Provides
-    fun provideRetrofit(): Retrofit {
+    fun provideRetrofit(authInterceptor: AuthInterceptor): Retrofit {
+        val client = OkHttpClient.Builder()
+            .addInterceptor(authInterceptor)
+            .build()
         return Retrofit.Builder()
             .baseUrl(Constants.BASE_URL)
             .client(client)

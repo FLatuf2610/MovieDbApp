@@ -4,13 +4,11 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.example.moviedbapp.presentation.models.Movie
 import com.example.moviedbapp.presentation.models.MovieItem
-import com.google.gson.annotations.SerializedName
 
 @Entity(tableName = "movie_entity")
 data class MovieEntity(
     @PrimaryKey(autoGenerate = false)
     val id: Int,
-    @SerializedName("poster_path")
     val posterPath: String?,
     val title: String,
     val backDropPath: String?,
@@ -20,7 +18,6 @@ data class MovieEntity(
     val realeseDate: String,
     val runtime: Int,
     val tagline: String,
-    @SerializedName("original_language")
     val originalLanguage: String,
     var isSaved: Boolean
 )
