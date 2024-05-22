@@ -82,7 +82,7 @@ import java.io.IOException
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
-    LaunchedEffect(true) {
+    LaunchedEffect(Unit) {
         viewModel.initViewModel()
     }
     val state by viewModel.state.collectAsState()
@@ -286,8 +286,9 @@ fun MovieItem(movie: MovieItem, width: Int = 112, height: Int = 160, onClickMovi
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(Constants.IMAGE_BASE_URL + movie.posterPath)
-                .crossfade(true)
-                .crossfade(500)
+                .size(240)
+                .crossfade(250)
+                .dispatcher(Dispatchers.IO)
                 .build(),
             contentScale = ContentScale.Crop,
             placeholder = null,
@@ -328,7 +329,8 @@ fun TopMoviesList(movies: MovieList, pagerState: PagerState, onClick: (Int) -> U
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
                         .data(Constants.IMAGE_BASE_URL + movie.posterPath)
-                        .crossfade(true)
+                        .crossfade(250)
+                        .size(480)
                         .dispatcher(Dispatchers.IO)
                         .build(),
                     contentDescription = null,
@@ -378,12 +380,13 @@ fun SearchedMovieItem(movie: MovieItem, onClickMovie: (MovieItem) -> Unit) {
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
                         .data(Constants.IMAGE_BASE_URL + movie.posterPath)
-                        .crossfade(true)
+                        .crossfade(250)
+                        .size(360)
                         .dispatcher(Dispatchers.IO)
                         .build(),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-                    filterQuality = FilterQuality.Low
+                    filterQuality = FilterQuality.Low,
                 )
             }
             Spacer(modifier = Modifier.width(16.dp))
